@@ -1,0 +1,8 @@
+---
+# tasks file for DefaultConfiguration
+- name: "Hosts"
+  hosts: all
+  become: true
+  become_method: sudo
+  roles:
+    - domain

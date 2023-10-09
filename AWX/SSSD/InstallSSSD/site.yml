@@ -1,0 +1,12 @@
+---
+# tasks file for DefaultConfiguration, Enable and configure your proxy, if you have it
+- name: "Hosts"
+  hosts: all
+  become: true
+  become_method: sudo
+#  environment:
+#    http_proxy: http://<PROXY_SERVER>
+#    https_proxy: http://<PROXY_SERVER>
+#    ftp_proxy: http://<PROXY_SERVER>
+  roles:
+    - domain

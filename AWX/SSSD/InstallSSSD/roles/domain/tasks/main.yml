@@ -1,0 +1,78 @@
+---
+- name: Installing some Packages...
+  yum:
+    name:
+      - sssd
+      - realmd
+      - oddjob
+      - oddjob-mkhomedir
+      - adcli
+      - samba-common
+      - samba-common-tools
+      - krb5-workstation
+      - openldap-clients
+    state: present
+
+
+- name: Configuring Join SH File...
+  template:
+    src: /var/lib/awx/projects/ChangeDomain/roles/domain/files/join.sh
+    dest: /tmp/
+    owner: root
+    group: root
+    mode: '777'
+
+
+- name: Join System to Active Directory...
+  command: /bin/bash /tmp/join.sh
+
+
+- name: Remove SH File...
+  file:
+    path: /tmp/join.sh
+    state: absent
+
+
+- name: Configuring SSSD (System Security Services Daemon)...
+  template:
+    src: /var/lib/awx/projects/ChangeDomain/roles/domain/files/sssd.conf
+    dest: /etc/sssd/sssd.conf
+    owner: root
+    group: root
+    mode: '0600'
+
+
+- name: Configuring Groups in SSSD...
+  ansible.builtin.lineinfile:
+    path: /etc/sssd/sssd.conf
+    regexp: '^simple_allow_groups'
+    insertafter: '^#simple_allow_groups'
+    line: simple_allow_groups = GlobalSysAdmin, GlobalOperation, {{ Sysadmin }}, {{ AllowLogon }}
+
+
+
+- name: Configuring Operation Group in Sudoers...
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers.d/sudoers
+    line: "%GlobalSysAdmin  ALL=(ALL:ALL) NOPASSWD:ALL"
+    create: yes
+
+
+- name: Configuring Operation Group in Sudoers...
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers.d/sudoers
+    line: "%GlobalOperation  ALL=(ALL:ALL) NOPASSWD:ALL"
+    create: yes
+
+
+- name: Configuring Sysadmin Group in Sudoers...
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers.d/sudoers
+    line: "%Sysadmin  ALL=(ALL:ALL) NOPASSWD:ALL"
+    create: yes
+
+
+- name: Restart SSSD (System Security Services Daemon)
+  service:
+    name: sssd
+    state: restarted
